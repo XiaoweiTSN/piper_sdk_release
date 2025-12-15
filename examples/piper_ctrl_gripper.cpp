@@ -57,7 +57,7 @@ int main() {
       range = 0;
     } else if (count == 300) {
       std::cout << "2-----------" << std::endl;
-      range = static_cast<int32_t>(0.05 * 1000.0 * 1000.0); // 0.05m = 50mm，转换为0.001mm单位
+      range = static_cast<int32_t>(0.10 * 1000.0 * 1000.0); // 0.05m = 50mm，转换为0.001mm单位
     } else if (count == 600) {
       std::cout << "3-----------" << std::endl;
       range = 0;

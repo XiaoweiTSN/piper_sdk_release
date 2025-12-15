@@ -212,19 +212,26 @@ piper.emergency_resume();              // 恢复
 #### 运动控制
 
 ```cpp
-// 关节控制（单位：0.001度）
+// 关节运动（自动设置MOVE J模式，单位：0.001度）
 std::vector<int32_t> joints = {0, 0, 0, 0, 0, 0};
 piper.move_joint(joints);
 
-// 笛卡尔控制（位置单位：0.001mm，姿态单位：0.001度）
-piper.move_cartesian(x, y, z, rx, ry, rz);
+// 笛卡尔点位运动（自动设置MOVE P模式）
+// 位置单位：0.001mm，姿态单位：0.001度
+piper_sdk::CartesianPose pose;
+pose.position_um[0] = 100000;  // X: 100mm
+pose.position_um[1] = 0;       // Y: 0mm
+pose.position_um[2] = 200000;  // Z: 200mm
+pose.orientation_mdeg[0] = 0;  // RX: 0度
+pose.orientation_mdeg[1] = 90000;  // RY: 90度
+pose.orientation_mdeg[2] = 0;  // RZ: 0度
+piper.move_cartesian(pose);
 
-// 设置运动模式
-piper.motion_control_2(
-    0x01,  // ctrl_mode: 0x01=CAN控制
-    0x01,  // move_mode: 0x01=MoveJ
-    50     // speed_rate: 0-100
-);
+// 直线插补运动（自动设置MOVE L模式）
+piper.move_linear(pose);
+
+// 注意：大多数情况下不需要手动调用motion_control_2()
+// move_joint/move_cartesian/move_linear会自动管理运动模式
 ```
 
 #### 夹爪控制

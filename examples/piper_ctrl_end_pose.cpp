@@ -81,10 +81,7 @@ int main() {
     std::cout << "目标位姿: X=" << X << " Y=" << Y << " Z=" << Z 
               << " RX=" << RX << " RY=" << RY << " RZ=" << RZ << std::endl;
     
-    // 设置运动模式控制 (MOVEP模式)
-    piper.motion_control_2(0x01, 0x00, 100);
-    
-    // 发送末端位姿控制命令
+    // 发送末端位姿控制命令（move_cartesian自动使用MOVE P模式）
     piper_sdk::CartesianPose pose;
     pose.position_um[0] = X;
     pose.position_um[1] = Y;

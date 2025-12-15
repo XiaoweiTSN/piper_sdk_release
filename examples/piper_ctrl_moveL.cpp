@@ -29,9 +29,7 @@ int main() {
   
   // 在XOY平面上画正方形
   
-  // 切换至MOVEP模式，移动到初始位置
-  piper.motion_control_2(0x01, 0x00, 100);
-  
+  // 使用MOVE P模式移动到初始位置（点位运动）
   piper_sdk::CartesianPose pose;
   pose.position_um[0] = 150000;
   pose.position_um[1] = -50000;
@@ -39,38 +37,36 @@ int main() {
   pose.orientation_mdeg[0] = -179900;
   pose.orientation_mdeg[1] = 0;
   pose.orientation_mdeg[2] = -179900;
-  piper.move_cartesian(pose);
+  piper.move_cartesian(pose);  // 自动使用MOVE P
   std::this_thread::sleep_for(2s);
   
-  // 切换至MOVEL模式
-  piper.motion_control_2(0x01, 0x02, 100);
-  
+  // 使用MOVE L模式画正方形（直线插补）
   // 第一条边
   pose.position_um[0] = 150000;
   pose.position_um[1] = 50000;
   pose.position_um[2] = 150000;
-  piper.move_cartesian(pose);
+  piper.move_linear(pose);  // 使用MOVE L直线插补
   std::this_thread::sleep_for(2s);
   
   // 第二条边
   pose.position_um[0] = 250000;
   pose.position_um[1] = 50000;
   pose.position_um[2] = 150000;
-  piper.move_cartesian(pose);
+  piper.move_linear(pose);
   std::this_thread::sleep_for(2s);
   
   // 第三条边
   pose.position_um[0] = 250000;
   pose.position_um[1] = -50000;
   pose.position_um[2] = 150000;
-  piper.move_cartesian(pose);
+  piper.move_linear(pose);
   std::this_thread::sleep_for(2s);
   
   // 第四条边
   pose.position_um[0] = 150000;
   pose.position_um[1] = -50000;
   pose.position_um[2] = 150000;
-  piper.move_cartesian(pose);
+  piper.move_linear(pose);
   
   std::cout << "正方形绘制完成！" << std::endl;
   

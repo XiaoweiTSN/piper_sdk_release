@@ -212,19 +212,26 @@ piper.emergency_resume();              // Resume
 #### Motion Control
 
 ```cpp
-// Joint control (unit: 0.001 degree)
+// Joint motion (automatically sets MOVE J mode, unit: 0.001 degree)
 std::vector<int32_t> joints = {0, 0, 0, 0, 0, 0};
 piper.move_joint(joints);
 
-// Cartesian control (position: 0.001mm, orientation: 0.001 degree)
-piper.move_cartesian(x, y, z, rx, ry, rz);
+// Cartesian point-to-point motion (automatically sets MOVE P mode)
+// Position unit: 0.001mm, orientation unit: 0.001 degree
+piper_sdk::CartesianPose pose;
+pose.position_um[0] = 100000;  // X: 100mm
+pose.position_um[1] = 0;       // Y: 0mm
+pose.position_um[2] = 200000;  // Z: 200mm
+pose.orientation_mdeg[0] = 0;  // RX: 0deg
+pose.orientation_mdeg[1] = 90000;  // RY: 90deg
+pose.orientation_mdeg[2] = 0;  // RZ: 0deg
+piper.move_cartesian(pose);
 
-// Set motion mode
-piper.motion_control_2(
-    0x01,  // ctrl_mode: 0x01=CAN control
-    0x01,  // move_mode: 0x01=MoveJ
-    50     // speed_rate: 0-100
-);
+// Linear interpolation motion (automatically sets MOVE L mode)
+piper.move_linear(pose);
+
+// Note: In most cases, you don't need to manually call motion_control_2()
+// move_joint/move_cartesian/move_linear automatically manage motion modes
 ```
 
 #### Gripper Control

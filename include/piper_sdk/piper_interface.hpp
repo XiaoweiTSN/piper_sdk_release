@@ -329,11 +329,30 @@ class PiperInterface {
    * @details 机械臂运动控制指令2，多功能命令，并更新存储的参数。
    *          包括：控制模式设置、运动模式设置、速度百分比设置、MIT模式设置等。
    *          
-   *          相关函数：
-   *          - move_joint(): 关节空间运动（需先设置 move_mode = 0x01）
-   *          - move_cartesian(): 笛卡尔空间运动（需先设置 move_mode = 0x02）
-   *          - move_circular(): 圆弧运动（需先设置 move_mode = 0x03）
-   *          - control_joint_mit(): MIT模式控制（需先设置 is_mit_mode = 0xAD）
+   *          ========== 重要：何时使用此函数 ==========
+   *          
+   *          大多数情况下，您不需要显式调用此函数！
+   *          直接使用以下高级函数，它们会自动管理模式：
+   *          - move_joint(): 关节运动（自动设置 MOVE J）
+   *          - move_cartesian(): 点位运动（自动设置 MOVE P）
+   *          - move_linear(): 直线插补（自动设置 MOVE L）
+   *          
+   *          ========== 特殊场景：何时需要显式调用 ==========
+   *          
+   *          只在以下情况下需要显式调用 motion_control_2()：
+   *          1. 圆弧运动（MOVE C）：
+   *             ```cpp
+   *             piper.motion_control_2(0x01, 0x03, 30);  // 设置 MOVE C
+   *             piper.send_cartesian_pose(pose1);        // 使用 send_* 而非 move_*
+   *             piper.move_circular(0x01);
+   *             ```
+   *          2. MIT模式：使用 control_joint_mit() 会自动处理
+   *          3. 特殊参数：安装位置、离线轨迹等
+   *          
+   *          重要提示：如果显式调用了 motion_control_2()，后续应使用：
+   *             - send_joint_positions() 而非 move_joint()
+   *             - send_cartesian_pose() 而非 move_cartesian()
+   *          否则 move_* 函数会覆盖您设置的模式！
    *          
    *          CAN ID：
    *            0x151
@@ -370,11 +389,30 @@ class PiperInterface {
    * @details Robotic arm motion control command 2, multi-function command, and updates stored parameters.
    *          Includes: control mode setting, motion mode setting, speed percentage setting, MIT mode setting, etc.
    *          
-   *          Related functions:
-   *          - move_joint(): Joint space motion (requires move_mode = 0x01)
-   *          - move_cartesian(): Cartesian space motion (requires move_mode = 0x02)
-   *          - move_circular(): Circular motion (requires move_mode = 0x03)
-   *          - control_joint_mit(): MIT mode control (requires is_mit_mode = 0xAD)
+   *          ========== Important: When to Use This Function ==========
+   *          
+   *          In most cases, you do NOT need to explicitly call this function!
+   *          Use the following high-level functions instead, which automatically manage modes:
+   *          - move_joint(): Joint motion (automatically sets MOVE J)
+   *          - move_cartesian(): Point motion (automatically sets MOVE P)
+   *          - move_linear(): Linear interpolation (automatically sets MOVE L)
+   *          
+   *          ========== Special Scenarios: When Explicit Call is Needed ==========
+   *          
+   *          Only explicitly call motion_control_2() in the following cases:
+   *          1. Circular motion (MOVE C):
+   *             ```cpp
+   *             piper.motion_control_2(0x01, 0x03, 30);  // Set MOVE C
+   *             piper.send_cartesian_pose(pose1);        // Use send_* instead of move_*
+   *             piper.move_circular(0x01);
+   *             ```
+   *          2. MIT mode: Use control_joint_mit() which handles it automatically
+   *          3. Special parameters: Installation position, offline trajectory, etc.
+   *          
+   *          Important Note: If you explicitly call motion_control_2(), subsequently use:
+   *             - send_joint_positions() instead of move_joint()
+   *             - send_cartesian_pose() instead of move_cartesian()
+   *          Otherwise move_* functions will override your mode settings!
    *          
    *          CAN ID:
    *            0x151
@@ -413,11 +451,14 @@ class PiperInterface {
   /**
    * @brief 在关节空间中移动机械臂
    * 
-   * @details 机械臂关节控制，发送前需要切换机械臂模式为关节控制模式。
+   * @details 机械臂关节控制，自动设置为MOVE J模式并发送关节位置。
    *          关节位置以 0.001 度单位指定（与 Python SDK 匹配）。
    *          
+   *          等效于：motion_control_2(0x01, 0x01, speed) + send_joint_positions()
+   *          
    *          CAN ID：
-   *            0x155, 0x156, 0x157
+   *            0x151（运动模式设置）
+   *            0x155, 0x156, 0x157（关节位置数据）
    *          
    *          关节限制参考：
    *          | 关节名   | 限制范围（弧度）         | 限制范围（角度）        |
@@ -436,11 +477,14 @@ class PiperInterface {
    * 
    * @brief Move arm in joint space
    * 
-   * @details Joint control for the robotic arm. Before sending, switch the robotic arm mode to joint control mode.
+   * @details Joint control for the robotic arm. Automatically sets MOVE J mode and sends joint positions.
    *          Joint positions are specified in 0.001 degree units (matching Python SDK).
    *          
+   *          Equivalent to: motion_control_2(0x01, 0x01, speed) + send_joint_positions()
+   *          
    *          CAN ID:
-   *            0x155, 0x156, 0x157
+   *            0x151 (motion mode setting)
+   *            0x155, 0x156, 0x157 (joint position data)
    *          
    *          Joint limits reference:
    *          | joint_name | limit(rad)             | limit(angle)         |
@@ -461,14 +505,17 @@ class PiperInterface {
                            std::optional<Limits> limits = std::nullopt);
   
   /**
-   * @brief 在笛卡尔空间中移动机械臂
+   * @brief 在笛卡尔空间中移动机械臂（点位运动）
    * 
-   * @details 机械臂末端数值发送，发送前需要切换机械臂模式为末端控制模式。
+   * @details 机械臂末端位姿控制，自动设置为MOVE P模式并发送末端位姿。
    *          末端表示为欧拉角。
    *          位置单位 0.001 mm，姿态单位 0.001 度（与 Python SDK 匹配）。
    *          
+   *          等效于：motion_control_2(0x01, 0x00, speed) + send_cartesian_pose()
+   *          
    *          CAN ID：
-   *            0x152, 0x153, 0x154
+   *            0x151（运动模式设置）
+   *            0x152, 0x153, 0x154（末端位姿数据）
    * 
    * @param pose 目标笛卡尔位姿
    *             - X：X坐标，单位 0.001 mm
@@ -481,14 +528,17 @@ class PiperInterface {
    * 
    * @return CommandResult 命令执行结果，表示成功或失败
    * 
-   * @brief Move arm in Cartesian space
+   * @brief Move arm in Cartesian space (point-to-point motion)
    * 
-   * @details End-effector control for the robotic arm. Before sending, switch the robotic arm mode to end-effector control mode.
+   * @details End-effector pose control. Automatically sets MOVE P mode and sends end-effector pose.
    *          The end-effector is expressed as Euler angles.
    *          Position in 0.001 mm, orientation in 0.001 deg (matching Python SDK).
    *          
+   *          Equivalent to: motion_control_2(0x01, 0x00, speed) + send_cartesian_pose()
+   *          
    *          CAN ID:
-   *            0x152, 0x153, 0x154
+   *            0x151 (motion mode setting)
+   *            0x152, 0x153, 0x154 (end-effector pose data)
    * 
    * @param pose Target Cartesian pose
    *             - X: X-axis coordinate, in 0.001 mm
@@ -503,6 +553,152 @@ class PiperInterface {
    */
   CommandResult move_cartesian(const CartesianPose& pose,
                                std::optional<Limits> limits = std::nullopt);
+  
+  /**
+   * @brief 在笛卡尔空间中以直线插补方式移动机械臂
+   * 
+   * @details 使用MOVE L（直线运动）模式在笛卡尔空间中移动机械臂。
+   *          自动设置运动模式为MOVE L（0x02），然后发送末端位姿命令。
+   *          位置单位 0.001 mm，姿态单位 0.001 deg（与 Python SDK 匹配）。
+   *          
+   *          等效于：motion_control_2(0x01, 0x02, speed) + send_cartesian_pose()
+   *          
+   *          适用场景：需要机械臂末端沿直线路径移动时使用。
+   *          
+   *          CAN ID：
+   *            0x151（运动模式设置）
+   *            0x152, 0x153, 0x154（末端位姿数据）
+   * 
+   * @param pose 目标笛卡尔位姿
+   *             - X：X坐标，单位 0.001 mm
+   *             - Y：Y坐标，单位 0.001 mm
+   *             - Z：Z坐标，单位 0.001 mm
+   *             - RX：绕X轴旋转，单位 0.001 deg
+   *             - RY：绕Y轴旋转，单位 0.001 deg
+   *             - RZ：绕Z轴旋转，单位 0.001 deg
+   * @param limits 可选的速度/加速度限制
+   * 
+   * @return CommandResult 命令执行结果，表示成功或失败
+   * 
+   * @brief Move arm in Cartesian space with linear interpolation
+   * 
+   * @details Moves the robotic arm in Cartesian space using MOVE L (linear motion) mode.
+   *          Automatically sets motion mode to MOVE L (0x02), then sends end pose command.
+   *          Position in 0.001 mm, orientation in 0.001 deg (matching Python SDK).
+   *          
+   *          Equivalent to: motion_control_2(0x01, 0x02, speed) + send_cartesian_pose()
+   *          
+   *          Use case: Use when the robot's end effector needs to move along a straight line path.
+   *          
+   *          CAN ID:
+   *            0x151 (motion mode setting)
+   *            0x152, 0x153, 0x154 (end-effector pose data)
+   * 
+   * @param pose Target Cartesian pose
+   *             - X: X-axis coordinate, in 0.001 mm
+   *             - Y: Y-axis coordinate, in 0.001 mm
+   *             - Z: Z-axis coordinate, in 0.001 mm
+   *             - RX: Rotation about X-axis, in 0.001 deg
+   *             - RY: Rotation about Y-axis, in 0.001 deg
+   *             - RZ: Rotation about Z-axis, in 0.001 deg
+   * @param limits Optional velocity/acceleration limits
+   * 
+   * @return CommandResult Command execution result indicating success or failure
+   */
+  CommandResult move_linear(const CartesianPose& pose,
+                            std::optional<Limits> limits = std::nullopt);
+  
+  /**
+   * @brief 发送笛卡尔位姿数据（不改变运动模式）
+   * 
+   * @details 只发送末端位姿数据到机械臂，不改变当前的运动模式。
+   *          适用于需要先通过motion_control_2()手动设置运动模式的场景，
+   *          例如MOVE C（圆弧运动）模式。
+   *          位置单位 0.001 mm，姿态单位 0.001 deg（与 Python SDK 匹配）。
+   *          
+   *          使用场景：
+   *          ```cpp
+   *          // 设置特殊模式（如MOVE C）
+   *          piper.motion_control_2(0x01, 0x03, 30);
+   *          // 发送位姿数据，不会覆盖MOVE C模式
+   *          piper.send_cartesian_pose(pose);
+   *          ```
+   *          
+   *          CAN ID：
+   *            0x152, 0x153, 0x154（末端位姿数据）
+   * 
+   * @param pose 目标笛卡尔位姿
+   * 
+   * @return CommandResult 命令执行结果，表示成功或失败
+   * 
+   * @brief Send Cartesian pose data (without changing motion mode)
+   * 
+   * @details Sends only end pose data to the robotic arm without changing current motion mode.
+   *          Suitable for scenarios where motion mode needs to be manually set via motion_control_2() first,
+   *          such as MOVE C (circular motion) mode.
+   *          Position in 0.001 mm, orientation in 0.001 deg (matching Python SDK).
+   *          
+   *          Usage example:
+   *          ```cpp
+   *          // Set special mode (e.g., MOVE C)
+   *          piper.motion_control_2(0x01, 0x03, 30);
+   *          // Send pose data without overriding MOVE C mode
+   *          piper.send_cartesian_pose(pose);
+   *          ```
+   *          
+   *          CAN ID:
+   *            0x152, 0x153, 0x154 (end pose data)
+   * 
+   * @param pose Target Cartesian pose
+   * 
+   * @return CommandResult Command execution result indicating success or failure
+   */
+  CommandResult send_cartesian_pose(const CartesianPose& pose);
+  
+  /**
+   * @brief 发送关节位置数据（不改变运动模式）
+   * 
+   * @details 只发送关节位置数据到机械臂，不改变当前的运动模式。
+   *          适用于需要先通过motion_control_2()手动设置运动模式的场景。
+   *          关节位置以 0.001 度单位指定（与 Python SDK 匹配）。
+   *          
+   *          使用场景：
+   *          ```cpp
+   *          // 设置特殊的速度或其他参数
+   *          piper.motion_control_2(0x01, 0x01, 30);  // MOVE J, 30% 速度
+   *          // 发送关节数据，不会覆盖速度设置
+   *          piper.send_joint_positions(positions);
+   *          ```
+   *          
+   *          CAN ID：
+   *            0x155, 0x156, 0x157（关节位置数据）
+   * 
+   * @param positions_mdeg 目标关节位置，单位 0.001 deg
+   * 
+   * @return CommandResult 命令执行结果，表示成功或失败
+   * 
+   * @brief Send joint position data (without changing motion mode)
+   * 
+   * @details Sends only joint position data to the robotic arm without changing current motion mode.
+   *          Suitable for scenarios where motion mode needs to be manually set via motion_control_2() first.
+   *          Joint positions are specified in 0.001 degree units (matching Python SDK).
+   *          
+   *          Usage example:
+   *          ```cpp
+   *          // Set special speed or other parameters
+   *          piper.motion_control_2(0x01, 0x01, 30);  // MOVE J, 30% speed
+   *          // Send joint data without overriding speed settings
+   *          piper.send_joint_positions(positions);
+   *          ```
+   *          
+   *          CAN ID:
+   *            0x155, 0x156, 0x157 (joint position data)
+   * 
+   * @param positions_mdeg Target joint positions in 0.001 deg
+   * 
+   * @return CommandResult Command execution result indicating success or failure
+   */
+  CommandResult send_joint_positions(const std::vector<int32_t>& positions_mdeg);
   
   /**
    * @brief 命令圆弧轨迹点更新

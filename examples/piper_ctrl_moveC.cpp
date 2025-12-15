@@ -46,7 +46,7 @@ int main() {
   pose.orientation_mdeg[0] = 178756;
   pose.orientation_mdeg[1] = 6035;
   pose.orientation_mdeg[2] = -178440;
-  piper.move_cartesian(pose);
+  piper.send_cartesian_pose(pose);  // 只发送位姿数据，不改变MOVE C模式
   piper.move_circular(0x01); // 更新圆弧轨迹点1
   std::this_thread::sleep_for(1ms);
   
@@ -57,7 +57,7 @@ int main() {
   pose.orientation_mdeg[0] = 175152;
   pose.orientation_mdeg[1] = -1259;
   pose.orientation_mdeg[2] = -157235;
-  piper.move_cartesian(pose);
+  piper.send_cartesian_pose(pose);  // 只发送位姿数据，不改变MOVE C模式
   piper.move_circular(0x02); // 更新圆弧轨迹点2
   std::this_thread::sleep_for(1ms);
   
@@ -68,7 +68,7 @@ int main() {
   pose.orientation_mdeg[0] = 179038;
   pose.orientation_mdeg[1] = 1105;
   pose.orientation_mdeg[2] = 179035;
-  piper.move_cartesian(pose);
+  piper.send_cartesian_pose(pose);  // 只发送位姿数据，不改变MOVE C模式
   piper.move_circular(0x03); // 更新圆弧轨迹点3
   std::this_thread::sleep_for(1ms);
   

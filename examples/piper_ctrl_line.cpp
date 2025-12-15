@@ -80,10 +80,7 @@ int main() {
     std::cout << "目标位姿: X=" << X << " Y=" << Y << " Z=" << Z 
               << " RX=" << RX << " RY=" << RY << " RZ=" << RZ << std::endl;
     
-    // 设置运动模式控制 (MOVEL模式 - 直线运动)
-    piper.motion_control_2(0x01, 0x02, 100);
-    
-    // 发送末端位姿控制命令
+    // 发送末端位姿控制命令（move_linear自动使用MOVE L模式 - 直线插补）
     piper_sdk::CartesianPose pose;
     pose.position_um[0] = X;
     pose.position_um[1] = Y;
@@ -91,7 +88,7 @@ int main() {
     pose.orientation_mdeg[0] = RX;
     pose.orientation_mdeg[1] = RY;
     pose.orientation_mdeg[2] = RZ;
-    piper.move_cartesian(pose);
+    piper.move_linear(pose);
     
     // 控制夹爪
     gripper_cmd.position_um = std::abs(joint_6);
