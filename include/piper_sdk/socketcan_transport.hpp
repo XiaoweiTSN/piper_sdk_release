@@ -9,7 +9,7 @@
  *          支持原生CAN硬件接口（例如 can0、can1）。
  * 
  * @author Wesley Cui 崔笑唯
- * @copyright Copyright (c) 2025 TNCA
+ * @copyright Copyright (c) 2025-2026 TNCA
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.

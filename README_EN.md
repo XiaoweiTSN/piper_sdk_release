@@ -246,6 +246,25 @@ cmd.set_zero = 0x00;         // 0xAE=Set zero point
 piper.control_gripper(cmd);
 ```
 
+#### Dexterous Hand Control
+
+```cpp
+// Position control - Finger order: [thumb tip, thumb root, index, middle, ring, pinky]
+piper_sdk::DexHandPositionCommand pos_cmd;
+pos_cmd.finger_positions_pct = {40, 40, 100, 100, 100, 100};  // Four-finger fist
+piper.move_dex_hand_position(pos_cmd);
+
+// Single finger control
+piper.move_dex_finger(piper_sdk::DexFingerIndex::kIndex, 50);
+
+// Return to Home position {40, 40, 0, 0, 0, 0}
+piper.move_dex_hand_home();
+
+// Read feedback
+auto positions = piper.get_dex_hand_positions();  // Position [0-100%]
+auto status = piper.get_dex_hand_status();        // Hand side, motor status
+```
+
 #### Status Reading
 
 All getters return `std::optional<>` type:
@@ -289,6 +308,27 @@ The SDK provides comprehensive example programs covering all functionalities:
 | `piper_ctrl_end_pose.cpp` | Control end effector pose |
 | `piper_ctrl_moveL.cpp` | Linear motion |
 | `piper_ctrl_moveC.cpp` | Circular motion |
+
+### Dexterous Hand Control
+
+| Example | Description |
+|---------|-------------|
+| `piper_ctrl_dex_finger.cpp` | Control single finger |
+| `piper_ctrl_dex_gesture.cpp` | Control gestures |
+| `piper_ctrl_dex_fist_cycle.cpp` | Four-finger fist cycle |
+| `piper_ctrl_dex_wave.cpp` | Wave animation demo |
+| `piper_ctrl_dex_modes.cpp` | Compare different control modes |
+
+### Dexterous Hand Status Reading
+
+| Example | Description |
+|---------|-------------|
+| `piper_read_dex_positions.cpp` | Read finger positions |
+| `piper_read_dex_velocities.cpp` | Read finger velocities |
+| `piper_read_dex_currents.cpp` | Read finger currents |
+| `piper_read_dex_status.cpp` | Read dexterous hand status |
+| `piper_read_dex_hand_side.cpp` | Read left/right hand identifier |
+| `piper_read_dex_feedback.cpp` | Read complete feedback |
 
 ### Status Reading
 

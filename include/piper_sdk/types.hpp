@@ -8,7 +8,7 @@
  *          本文件包含SDK中使用的所有基础数据结构，包括运动控制类型、反馈结构和配置参数。
  * 
  * @author Wesley Cui 崔笑唯
- * @copyright Copyright (c) 2025 TNCA
+ * @copyright Copyright (c) 2025-2026 TNCA
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -498,6 +498,190 @@ struct ConnectStatus {
   bool receiving{false};  ///< Receiving thread active | 接收线程活动
   bool stale{true};       ///< Feedback data is stale | 反馈数据过期
   std::chrono::steady_clock::time_point last_feedback_time{}; ///< Last feedback timestamp | 最后反馈时间戳
+};
+
+//============================================================================
+// Dexterous Hand Types | 灵巧手类型
+//============================================================================
+
+/**
+ * @enum DexHandSide
+ * @brief Dexterous hand side identifier
+ *        灵巧手左右手标识
+ */
+enum class DexHandSide : uint8_t {
+  kUnknown = 0x00,  ///< Unknown | 未知
+  kLeft = 0x01,     ///< Left hand | 左手
+  kRight = 0x02     ///< Right hand | 右手
+};
+
+/**
+ * @enum DexFingerStatus
+ * @brief Dexterous hand finger motor status
+ *        灵巧手手指电机状态
+ */
+enum class DexFingerStatus : uint8_t {
+  kIdle = 0,       ///< Motor idle | 马达空闲
+  kRunning = 1,    ///< Motor running | 马达运行
+  kStalled = 2     ///< Motor stalled | 马达堵转
+};
+
+/**
+ * @enum DexFingerIndex
+ * @brief Dexterous hand finger index (matches CAN byte layout)
+ *        灵巧手手指索引（匹配CAN字节布局）
+ *
+ * @details Finger order in CAN frame: Byte[2]=thumb_tip, Byte[3]=thumb_root,
+ *          Byte[4]=index, Byte[5]=middle, Byte[6]=ring, Byte[7]=pinky
+ *          CAN帧中手指顺序：Byte[2]=拇指尖，Byte[3]=拇指根，
+ *          Byte[4]=食指，Byte[5]=中指，Byte[6]=无名指，Byte[7]=小指
+ */
+enum class DexFingerIndex : uint8_t {
+  kThumbTip = 0,   ///< Thumb tip | 拇指尖
+  kThumbRoot = 1,  ///< Thumb root | 拇指根
+  kIndex = 2,      ///< Index finger | 食指
+  kMiddle = 3,     ///< Middle finger | 中指
+  kRing = 4,       ///< Ring finger | 无名指
+  kPinky = 5       ///< Pinky finger | 小指
+};
+
+/**
+ * @struct DexHandPositionCommand
+ * @brief Dexterous hand position control command
+ *        灵巧手位置控制命令
+ *
+ * @details All values in percentage (0-100%).
+ *          CAN ID: 0x1B1, max 100Hz control frequency.
+ *          所有值为百分比 (0-100%)。
+ *          CAN ID: 0x1B1，最大支持100Hz控制频率。
+ */
+struct DexHandPositionCommand {
+  std::array<uint8_t, 6> finger_positions_pct{};  ///< Finger positions [0-100%] | 手指位置 [0-100%]
+  // Index: 0=thumb_tip, 1=thumb_root, 2=index, 3=middle, 4=ring, 5=pinky
+  // 索引：0=拇指尖，1=拇指根，2=食指，3=中指，4=无名指，5=小指
+};
+
+/**
+ * @struct DexHandVelocityCommand
+ * @brief Dexterous hand velocity control command
+ *        灵巧手速度控制命令
+ *
+ * @details All values in percentage (-100 to +100%).
+ *          CAN ID: 0x1B2, max 100Hz control frequency.
+ *          所有值为百分比 (-100 到 +100%)。
+ *          CAN ID: 0x1B2，最大支持100Hz控制频率。
+ */
+struct DexHandVelocityCommand {
+  std::array<int8_t, 6> finger_velocities_pct{};  ///< Finger velocities [-100~100%] | 手指速度 [-100~100%]
+};
+
+/**
+ * @struct DexHandCurrentCommand
+ * @brief Dexterous hand current/torque control command
+ *        灵巧手电流控制命令
+ *
+ * @details All values in percentage (-100 to +100%).
+ *          CAN ID: 0x1B3, max 100Hz control frequency.
+ *          所有值为百分比 (-100 到 +100%)。
+ *          CAN ID: 0x1B3，最大支持100Hz控制频率。
+ */
+struct DexHandCurrentCommand {
+  std::array<int8_t, 6> finger_currents_pct{};  ///< Finger currents [-100~100%] | 手指电流 [-100~100%]
+};
+
+/**
+ * @struct DexHandPositionTimedCommand
+ * @brief Dexterous hand position with time control command
+ *        灵巧手位置+时间控制命令
+ *
+ * @details Position in percentage (0-100%), time in 10ms units (0-255).
+ *          CAN ID: 0x1B5 (requires 2 frames: 0x12 for position, 0x22 for time).
+ *          SDK automatically handles the two-frame sequence within 50ms.
+ *          位置为百分比 (0-100%)，时间单位为 10ms (0-255)。
+ *          CAN ID: 0x1B5（需要两帧：0x12位置帧，0x22时间帧）。
+ *          SDK自动处理两帧时序（间隔不超过50ms）。
+ */
+struct DexHandPositionTimedCommand {
+  std::array<uint8_t, 6> finger_positions_pct{};  ///< Finger positions [0-100%] | 手指位置 [0-100%]
+  std::array<uint8_t, 6> finger_times_10ms{};     ///< Motion time per finger [0-255] x 10ms | 每个手指运动时间 [0-255] x 10ms
+};
+
+/**
+ * @struct DexHandStatusFeedback
+ * @brief Dexterous hand status feedback
+ *        灵巧手状态反馈
+ *
+ * @details CAN ID: 0x1C0, 20Hz feedback rate.
+ *          Contains hand side identifier and motor status for each finger.
+ *          CAN ID: 0x1C0，20Hz反馈频率。
+ *          包含左右手标识和每个手指的电机状态。
+ */
+struct DexHandStatusFeedback {
+  DexHandSide hand_side{DexHandSide::kUnknown};    ///< Left/right hand | 左/右手
+  std::array<DexFingerStatus, 6> finger_status{};  ///< Motor status per finger | 每个手指的电机状态
+};
+
+/**
+ * @struct DexHandPositionFeedback
+ * @brief Dexterous hand position feedback
+ *        灵巧手位置反馈
+ *
+ * @details CAN ID: 0x1C1, 100Hz feedback rate.
+ *          CAN ID: 0x1C1，100Hz反馈频率。
+ */
+struct DexHandPositionFeedback {
+  std::array<uint8_t, 6> finger_positions_pct{};  ///< Finger positions [0-100%] | 手指位置 [0-100%]
+};
+
+/**
+ * @struct DexHandVelocityFeedback
+ * @brief Dexterous hand velocity feedback
+ *        灵巧手速度反馈
+ *
+ * @details CAN ID: 0x1C2, 20Hz feedback rate.
+ *          CAN ID: 0x1C2，20Hz反馈频率。
+ */
+struct DexHandVelocityFeedback {
+  std::array<int8_t, 6> finger_velocities_pct{};  ///< Finger velocities [-100~100%] | 手指速度 [-100~100%]
+};
+
+/**
+ * @struct DexHandCurrentFeedback
+ * @brief Dexterous hand current feedback
+ *        灵巧手电流反馈
+ *
+ * @details CAN ID: 0x1C3, 20Hz feedback rate.
+ *          CAN ID: 0x1C3，20Hz反馈频率。
+ */
+struct DexHandCurrentFeedback {
+  std::array<int8_t, 6> finger_currents_pct{};  ///< Finger currents [-100~100%] | 手指电流 [-100~100%]
+};
+
+/**
+ * @struct DexHandFeedback
+ * @brief Complete dexterous hand feedback state
+ *        灵巧手完整反馈状态
+ *
+ * @details Aggregates all feedback data from the dexterous hand.
+ *          汇总灵巧手的所有反馈数据。
+ */
+struct DexHandFeedback {
+  std::chrono::steady_clock::time_point timestamp{std::chrono::steady_clock::now()}; ///< Feedback timestamp | 反馈时间戳
+  DexHandStatusFeedback status{};      ///< Status feedback (hand side, motor status) | 状态反馈（左右手，电机状态）
+  DexHandPositionFeedback positions{}; ///< Position feedback | 位置反馈
+  DexHandVelocityFeedback velocities{};///< Velocity feedback | 速度反馈
+  DexHandCurrentFeedback currents{};   ///< Current feedback | 电流反馈
+};
+
+/**
+ * @struct TimedDexHandState
+ * @brief Dexterous hand state with timestamp and frequency info
+ *        带时间戳和频率信息的灵巧手状态
+ */
+struct TimedDexHandState {
+  DexHandFeedback feedback{};    ///< Complete feedback data | 完整反馈数据
+  double position_hz{0.0};       ///< Position feedback frequency (0x1C1, ~100Hz) | 位置反馈频率
+  double status_hz{0.0};         ///< Status feedback frequency (0x1C0, ~20Hz) | 状态反馈频率
 };
 
 }  // namespace piper_sdk

@@ -7,7 +7,7 @@
  *          为周期性事件（例如 CAN 消息接收）提供频率计算。
  * 
  * @author Wesley Cui 崔笑唯
- * @copyright Copyright (c) 2025 TNCA
+ * @copyright Copyright (c) 2025-2026 TNCA
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.

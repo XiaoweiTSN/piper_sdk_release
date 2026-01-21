@@ -246,6 +246,25 @@ cmd.set_zero = 0x00;         // 0xAE=设置零点
 piper.control_gripper(cmd);
 ```
 
+#### 灵巧手控制
+
+```cpp
+// 位置控制 - 手指顺序: [拇指尖, 拇指根, 食指, 中指, 无名指, 小指]
+piper_sdk::DexHandPositionCommand pos_cmd;
+pos_cmd.finger_positions_pct = {40, 40, 100, 100, 100, 100};  // 四指握拳
+piper.move_dex_hand_position(pos_cmd);
+
+// 单指控制
+piper.move_dex_finger(piper_sdk::DexFingerIndex::kIndex, 50);
+
+// 回Home位置 {40, 40, 0, 0, 0, 0}
+piper.move_dex_hand_home();
+
+// 读取反馈
+auto positions = piper.get_dex_hand_positions();  // 位置 [0-100%]
+auto status = piper.get_dex_hand_status();        // 左右手标识、电机状态
+```
+
 #### 状态读取
 
 所有 getter 返回 `std::optional<>` 类型：
@@ -289,6 +308,27 @@ SDK 提供了丰富的示例程序，涵盖所有功能：
 | `piper_ctrl_end_pose.cpp` | 控制末端位姿 |
 | `piper_ctrl_moveL.cpp` | 直线运动 |
 | `piper_ctrl_moveC.cpp` | 圆弧运动 |
+
+### 灵巧手控制类
+
+| 示例 | 说明 |
+|------|------|
+| `piper_ctrl_dex_finger.cpp` | 控制单个手指 |
+| `piper_ctrl_dex_gesture.cpp` | 控制手势 |
+| `piper_ctrl_dex_fist_cycle.cpp` | 四指握拳循环 |
+| `piper_ctrl_dex_wave.cpp` | 波浪动画演示 |
+| `piper_ctrl_dex_modes.cpp` | 对比不同控制模式 |
+
+### 灵巧手状态读取类
+
+| 示例 | 说明 |
+|------|------|
+| `piper_read_dex_positions.cpp` | 读取手指位置 |
+| `piper_read_dex_velocities.cpp` | 读取手指速度 |
+| `piper_read_dex_currents.cpp` | 读取手指电流 |
+| `piper_read_dex_status.cpp` | 读取灵巧手状态 |
+| `piper_read_dex_hand_side.cpp` | 读取左右手标识 |
+| `piper_read_dex_feedback.cpp` | 读取完整反馈信息 |
 
 ### 状态读取类
 

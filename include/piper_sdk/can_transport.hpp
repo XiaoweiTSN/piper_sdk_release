@@ -8,7 +8,7 @@
  *          定义了CAN帧传输和接收的抽象基类，以及命令结果和帧数据结构。
  * 
  * @author Wesley Cui 崔笑唯
- * @copyright Copyright (c) 2025 TNCA
+ * @copyright Copyright (c) 2025-2026 TNCA
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.

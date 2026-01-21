@@ -9,7 +9,7 @@
  *          从关节角度计算末端执行器和中间连杆位姿。
  * 
  * @author Wesley Cui 崔笑唯
- * @copyright Copyright (c) 2025 TNCA
+ * @copyright Copyright (c) 2025-2026 TNCA
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.

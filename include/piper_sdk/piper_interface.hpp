@@ -9,8 +9,8 @@
  *          提供高级控制命令、状态反馈和配置。
  * 
  * @author Wesley Cui 崔笑唯
- * @copyright Copyright (c) 2025 TNCA
- * @version 0.1.0
+ * @copyright Copyright (c) 2025-2026 TNCA
+ * @version 1.3.0
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -882,7 +882,160 @@ class PiperInterface {
    * @return CommandResult Command execution result indicating success or failure
    */
   CommandResult control_gripper(const GripperCommand& command);
-  
+
+  //============================================================================
+  // Dexterous Hand Control | 灵巧手控制
+  //============================================================================
+
+  /**
+   * @brief 控制灵巧手各指位置
+   *
+   * @details 发送灵巧手位置控制命令。
+   *          CAN ID: 0x1B1
+   *          最大支持100Hz控制频率。
+   *
+   * @param command 位置控制命令结构体
+   *                - finger_positions_pct: 6个手指的目标位置 [0-100%]
+   *                  顺序: [拇指尖, 拇指根, 食指, 中指, 无名指, 小指]
+   *
+   * @return CommandResult 命令执行结果
+   *
+   * @brief Control dexterous hand finger positions
+   *
+   * @details Sends dexterous hand position control command.
+   *          CAN ID: 0x1B1
+   *          Maximum 100Hz control frequency supported.
+   *
+   * @param command Position control command structure
+   *                - finger_positions_pct: Target positions for 6 fingers [0-100%]
+   *                  Order: [thumb_tip, thumb_root, index, middle, ring, pinky]
+   *
+   * @return CommandResult Command execution result
+   */
+  CommandResult move_dex_hand_position(const DexHandPositionCommand& command);
+
+  /**
+   * @brief 控制灵巧手各指速度
+   *
+   * @details 发送灵巧手速度控制命令。
+   *          CAN ID: 0x1B2
+   *          最大支持100Hz控制频率。
+   *
+   * @param command 速度控制命令结构体
+   *                - finger_velocities_pct: 6个手指的目标速度 [-100~100%]
+   *
+   * @return CommandResult 命令执行结果
+   *
+   * @brief Control dexterous hand finger velocities
+   *
+   * @details Sends dexterous hand velocity control command.
+   *          CAN ID: 0x1B2
+   *          Maximum 100Hz control frequency supported.
+   *
+   * @param command Velocity control command structure
+   *                - finger_velocities_pct: Target velocities for 6 fingers [-100~100%]
+   *
+   * @return CommandResult Command execution result
+   */
+  CommandResult move_dex_hand_velocity(const DexHandVelocityCommand& command);
+
+  /**
+   * @brief 控制灵巧手各指电流
+   *
+   * @details 发送灵巧手电流控制命令。
+   *          CAN ID: 0x1B3
+   *          最大支持100Hz控制频率。
+   *
+   * @param command 电流控制命令结构体
+   *                - finger_currents_pct: 6个手指的目标电流 [-100~100%]
+   *
+   * @return CommandResult 命令执行结果
+   *
+   * @brief Control dexterous hand finger currents
+   *
+   * @details Sends dexterous hand current control command.
+   *          CAN ID: 0x1B3
+   *          Maximum 100Hz control frequency supported.
+   *
+   * @param command Current control command structure
+   *                - finger_currents_pct: Target currents for 6 fingers [-100~100%]
+   *
+   * @return CommandResult Command execution result
+   */
+  CommandResult move_dex_hand_current(const DexHandCurrentCommand& command);
+
+  /**
+   * @brief 控制灵巧手各指位置和运动时间
+   *
+   * @details 发送灵巧手位置+时间控制命令。
+   *          CAN ID: 0x1B5（需要发送两帧：0x12位置帧和0x22时间帧）
+   *          两帧间隔不能超过50ms，SDK内部保证此时序。
+   *          最大支持100Hz控制频率。
+   *
+   * @param command 位置+时间控制命令结构体
+   *                - finger_positions_pct: 6个手指的目标位置 [0-100%]
+   *                - finger_times_10ms: 6个手指的运动时间 [0-255] x 10ms
+   *
+   * @return CommandResult 命令执行结果
+   *
+   * @brief Control dexterous hand finger positions with motion time
+   *
+   * @details Sends dexterous hand position+time control command.
+   *          CAN ID: 0x1B5 (requires 2 frames: 0x12 for position, 0x22 for time)
+   *          SDK automatically ensures the two frames are sent within 50ms.
+   *          Maximum 100Hz control frequency supported.
+   *
+   * @param command Position+time control command structure
+   *                - finger_positions_pct: Target positions for 6 fingers [0-100%]
+   *                - finger_times_10ms: Motion time per finger [0-255] x 10ms
+   *
+   * @return CommandResult Command execution result
+   */
+  CommandResult move_dex_hand_position_timed(const DexHandPositionTimedCommand& command);
+
+  /**
+   * @brief 设置单个手指位置
+   *
+   * @details 便捷方法，设置单个手指位置，其他手指保持上次命令值。
+   *
+   * @param finger 手指索引 (DexFingerIndex)
+   * @param position_pct 目标位置 [0-100%]
+   *
+   * @return CommandResult 命令执行结果
+   *
+   * @brief Set single finger position
+   *
+   * @details Convenience method to set a single finger position.
+   *          Other fingers retain their last commanded values.
+   *
+   * @param finger Finger index (DexFingerIndex)
+   * @param position_pct Target position [0-100%]
+   *
+   * @return CommandResult Command execution result
+   */
+  CommandResult move_dex_finger(DexFingerIndex finger, uint8_t position_pct);
+
+  /**
+   * @brief 灵巧手回到Home位置
+   *
+   * @details 将灵巧手移动到预设的Home位置：{40, 40, 0, 0, 0, 0}
+   *          即拇指尖40%、拇指根40%，其余四指完全张开。
+   *
+   * @return CommandResult 命令执行结果
+   *
+   * @brief Move dexterous hand to home position
+   *
+   * @details Moves the hand to preset home: {40, 40, 0, 0, 0, 0}
+   *          (thumb_tip 40%, thumb_root 40%, other four fingers fully open)
+   *
+   * @return CommandResult Command execution result
+   */
+  CommandResult move_dex_hand_home();
+
+  //============================================================================
+  // MIT Control | MIT 控制
+  //============================================================================
+
   /**
    * @brief 在 MIT 模式下控制关节
    * 
@@ -1948,7 +2101,95 @@ class PiperInterface {
    *         如果可用则返回夹爪状态
    */
   std::optional<TimedGripperState> get_arm_gripper_messages() const;
-  
+
+  /**
+   * @brief 获取灵巧手完整反馈状态
+   *
+   * @details 返回缓存的灵巧手反馈数据，包括状态、位置、速度、电流。
+   *          Position feedback updates at ~100Hz, others at ~20Hz.
+   *          位置反馈约100Hz更新，其他约20Hz更新。
+   *
+   * @return std::optional<TimedDexHandState> 如果有数据则返回反馈状态
+   *
+   * @brief Get complete dexterous hand feedback state
+   *
+   * @details Returns cached dexterous hand feedback data including status,
+   *          position, velocity, and current.
+   *
+   * @return std::optional<TimedDexHandState> Feedback state if available
+   */
+  std::optional<TimedDexHandState> get_dex_hand_feedback();
+
+  /**
+   * @brief 获取灵巧手各指位置 [0-100%]
+   *
+   * @details 6个手指的弯曲程度，0%=完全张开，100%=完全弯曲。
+   *          CAN ID: 0x1C1, 约100Hz更新。
+   *
+   * @return std::optional<DexHandPositionFeedback> 包含6个手指位置的数组
+   *
+   * @brief Get finger positions [0-100%]
+   *
+   * @details Bending degree of 6 fingers, 0%=fully open, 100%=fully closed.
+   *          CAN ID: 0x1C1, ~100Hz update rate.
+   *
+   * @return std::optional<DexHandPositionFeedback> Array of 6 finger positions
+   */
+  std::optional<DexHandPositionFeedback> get_dex_hand_positions();
+
+  /**
+   * @brief 获取灵巧手各指速度 [-100%~+100%]
+   *
+   * @details 6个手指的运动速度，正值=弯曲方向，负值=张开方向。
+   *          CAN ID: 0x1C2, 约20Hz更新。
+   *
+   * @return std::optional<DexHandVelocityFeedback> 包含6个手指速度的数组
+   *
+   * @brief Get finger velocities [-100%~+100%]
+   *
+   * @details Movement speed of 6 fingers, positive=closing, negative=opening.
+   *          CAN ID: 0x1C2, ~20Hz update rate.
+   *
+   * @return std::optional<DexHandVelocityFeedback> Array of 6 finger velocities
+   */
+  std::optional<DexHandVelocityFeedback> get_dex_hand_velocities();
+
+  /**
+   * @brief 获取灵巧手各指电流 [-100%~+100%]
+   *
+   * @details 6个手指的电机电流百分比，反映负载情况。
+   *          CAN ID: 0x1C3, 约20Hz更新。
+   *
+   * @return std::optional<DexHandCurrentFeedback> 包含6个手指电流的数组
+   *
+   * @brief Get finger currents [-100%~+100%]
+   *
+   * @details Motor current percentage of 6 fingers, reflects load.
+   *          CAN ID: 0x1C3, ~20Hz update rate.
+   *
+   * @return std::optional<DexHandCurrentFeedback> Array of 6 finger currents
+   */
+  std::optional<DexHandCurrentFeedback> get_dex_hand_currents();
+
+  /**
+   * @brief 获取灵巧手左右手标识和各指电机状态
+   *
+   * @details hand_side: 左手/右手/未知
+   *          finger_status[6]: 每个手指的电机状态(空闲/运行/堵转)
+   *          CAN ID: 0x1C0, 约20Hz更新。
+   *
+   * @return std::optional<DexHandStatusFeedback> 左右手标识和电机状态
+   *
+   * @brief Get hand side identifier and motor status of each finger
+   *
+   * @details hand_side: left/right/unknown
+   *          finger_status[6]: motor status per finger (idle/running/stalled)
+   *          CAN ID: 0x1C0, ~20Hz update rate.
+   *
+   * @return std::optional<DexHandStatusFeedback> Hand side and motor status
+   */
+  std::optional<DexHandStatusFeedback> get_dex_hand_status();
+
   /**
    * @brief Get end-effector pose with timestamp and frequency
    *        获取带时间戳和频率的末端执行器位姿
@@ -2525,6 +2766,12 @@ class PiperInterface {
   std::optional<ArmFeedback> process_feedback_frame(const CanFrame& frame);
   double fps_for_ids(const std::vector<uint32_t>& ids) const;
   void log(LogLevel level, const std::string& message) const;
+  /**
+   * @brief Require CAN control mode, switch from standby if needed
+   *        需要CAN控制模式，如处于待机模式则自动切换
+   * @note Must be called with mutex_ held | 必须在持有 mutex_ 的情况下调用
+   */
+  void require_can_mode();
 
   //============================================================================
   // Private Member Variables | 私有成员变量
@@ -2542,7 +2789,8 @@ class PiperInterface {
   AllMotorLimits all_motor_limits_{};                                   ///< All motor angle/speed limits | 所有电机角度/速度限制
   AllMotorLimits all_motor_accel_limits_{};                            ///< All motor acceleration limits | 所有电机加速度限制
   std::optional<EndVelocityLimits> cached_end_velocity_limits_{};      ///< Cached end velocity limits | 缓存的末端速度限制
-  std::optional<std::string> cached_firmware_version_{};               ///< Cached firmware version | 缓存的固件版本
+  mutable std::optional<std::string> cached_firmware_version_{};       ///< Cached firmware version | 缓存的固件版本
+  std::vector<uint8_t> firmware_data_buffer_{};                        ///< Firmware data accumulation buffer | 固件数据累积缓冲区
   std::optional<InstructionResponse> instruction_response_{};          ///< Cached instruction response | 缓存的指令响应
   std::optional<GripperTeachingPendantParam> gripper_teaching_param_{}; ///< Cached teaching param | 缓存的示教参数
   MotionControlParameters motion_ctrl_params_{};                       ///< Motion control parameters | 运动控制参数
@@ -2559,6 +2807,12 @@ class PiperInterface {
   std::optional<std::vector<int32_t>> last_joint_command_{};           ///< Last joint command | 最后关节命令
   std::optional<CartesianPose> last_cartesian_command_{};              ///< Last Cartesian command | 最后笛卡尔命令
   std::optional<GripperCommand> last_gripper_command_{};               ///< Last gripper command | 最后夹爪命令
+
+  // Dexterous hand state | 灵巧手状态
+  DexHandFeedback dex_hand_feedback_{};                                 ///< Dexterous hand feedback | 灵巧手反馈
+  bool dex_hand_feedback_valid_{false};                                 ///< Dexterous hand feedback valid flag | 灵巧手反馈有效标志
+  std::optional<DexHandPositionCommand> last_dex_hand_position_command_{}; ///< Last dex hand position command | 最后灵巧手位置命令
+
   std::unordered_map<uint32_t, FpsCounter> fps_counters_;              ///< FPS counters per CAN ID | 每个 CAN ID 的 FPS 计数器
   std::unique_ptr<Logger> logger_;                                     ///< Logger instance | 日志记录器实例
   mutable std::atomic<bool> running_{false};                           ///< Receiver thread running flag | 接收线程运行标志

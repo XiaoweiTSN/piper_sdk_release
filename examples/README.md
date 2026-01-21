@@ -64,6 +64,27 @@ g++ -std=c++17 -I../include \
 | [`piper_ctrl_moveC.cpp`](./piper_ctrl_moveC.cpp) | 控制机械臂圆弧运动（MoveC 模式） |
 | [`piper_ctrl_moveP.cpp`](./piper_ctrl_moveP.cpp) | 控制机械臂末端执行器运动（MoveP 模式） |
 
+### 灵巧手控制类
+
+| 文件名 | 说明 |
+|---|---|
+| [`piper_ctrl_dex_finger.cpp`](./piper_ctrl_dex_finger.cpp) | 控制灵巧手单个手指运动 |
+| [`piper_ctrl_dex_fist_cycle.cpp`](./piper_ctrl_dex_fist_cycle.cpp) | 控制灵巧手握拳/张开循环 |
+| [`piper_ctrl_dex_gesture.cpp`](./piper_ctrl_dex_gesture.cpp) | 控制灵巧手预设手势 |
+| [`piper_ctrl_dex_modes.cpp`](./piper_ctrl_dex_modes.cpp) | 灵巧手多种控制模式演示（位置/速度/电流） |
+| [`piper_ctrl_dex_wave.cpp`](./piper_ctrl_dex_wave.cpp) | 控制灵巧手波浪运动 |
+
+### 灵巧手状态读取类
+
+| 文件名 | 说明 |
+|---|---|
+| [`piper_read_dex_currents.cpp`](./piper_read_dex_currents.cpp) | 读取灵巧手各手指电流 |
+| [`piper_read_dex_feedback.cpp`](./piper_read_dex_feedback.cpp) | 读取灵巧手完整反馈信息 |
+| [`piper_read_dex_hand_side.cpp`](./piper_read_dex_hand_side.cpp) | 读取灵巧手左右手类型 |
+| [`piper_read_dex_positions.cpp`](./piper_read_dex_positions.cpp) | 读取灵巧手各手指位置 |
+| [`piper_read_dex_status.cpp`](./piper_read_dex_status.cpp) | 读取灵巧手状态信息 |
+| [`piper_read_dex_velocities.cpp`](./piper_read_dex_velocities.cpp) | 读取灵巧手各手指速度 |
+
 ### 状态读取类
 
 | 文件名 | 说明 |
